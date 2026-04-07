@@ -1,0 +1,211 @@
+<?php
+  $autor = "Ema Čurla";
+
+  // Generiraj ili zadrži zamišljeni broj u GET parametru
+  if (isset($_GET['pogodak'])) {
+    // Forma je poslana — zadrži isti zamišljeni broj
+    $zamisljenBroj = isset($_GET['zamisljen']) ? (int) $_GET['zamisljen'] : rand(1, 9);
+    $uneseni       = (int) $_GET['pogodak'];
+    $pogodio       = ($uneseni === $zamisljenBroj);
+    $prikaziRezultat = true;
+  } else {
+    // Novi posjet — generiraj novi broj
+    $zamisljenBroj   = rand(1, 9);
+    $uneseni         = null;
+    $prikaziRezultat = false;
+  }
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Igra — pogodi broj</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:      #0f1117;
+      --card:    #ffffff;
+      --text:    #1a1a1a;
+      --muted:   #6b7280;
+      --accent:  #2563eb;
+      --success: #16a34a;
+      --danger:  #dc2626;
+      --border:  #d1d5db;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 480px;
+      margin: 48px auto;
+      background: var(--card);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+    }
+
+    .form-group input[type="number"]:focus {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 11px 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn:hover   { opacity: 0.88; }
+    .btn:active  { opacity: 0.75; }
+    .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+    .btn.success { background: var(--success); }
+    .btn.danger  { background: var(--danger); }
+
+    .result-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+
+    .result-box.success {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: var(--success);
+    }
+
+    .result-box.danger {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: var(--danger);
+    }
+
+    .novi-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .novi-link:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 28px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <h1>Igra (pogodi broj)</h1>
+    <p class="subtitle">Autor: <?php echo $autor; ?></p>
+
+    <form method="GET" action="vjezba5.php">
+      <!-- Čuvamo zamišljeni broj između submita -->
+      <input type="hidden" name="zamisljen" value="<?php echo $zamisljenBroj; ?>">
+
+      <div class="form-group">
+        <label for="pogodak">Upiši jedan broj od 1 do 9*</label>
+        <input
+          type="number"
+          id="pogodak"
+          name="pogodak"
+          min="1"
+          max="9"
+          step="1"
+          required
+          value="<?php echo $uneseni !== null ? $uneseni : ''; ?>"
+        >
+      </div>
+
+      <?php if ($prikaziRezultat): ?>
+        <?php if ($pogodio): ?>
+          <button type="submit" class="btn success">Pogodak, probaj ponovo!</button>
+          <div class="result-box success">
+            Zamišljeni broj je <?php echo $zamisljenBroj; ?>.
+          </div>
+        <?php else: ?>
+          <button type="submit" class="btn danger">Krivo, probaj ponovo!</button>
+          <div class="result-box danger">
+            Zamišljeni broj je <?php echo $zamisljenBroj; ?>.
+          </div>
+        <?php endif; ?>
+      <?php else: ?>
+        <button type="submit" class="btn">Provjeri!</button>
+      <?php endif; ?>
+
+    </form>
+
+    <a class="novi-link" href="vjezba5.php">↺ Nova igra (novi broj)</a>
+
+    <footer>
+      &copy; <?php echo date("Y"); ?> &mdash; Vježba 5
+    </footer>
+  </div>
+
+</body>
+<!-- vjezba5.php -->
+</html>
