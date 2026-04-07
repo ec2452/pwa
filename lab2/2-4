@@ -1,0 +1,202 @@
+<?php
+  $a = $b = $c = null;
+
+  if (isset($_GET['a'], $_GET['b']) && $_GET['a'] !== '' && $_GET['b'] !== '') {
+    $a = (float) $_GET['a'];
+    $b = (float) $_GET['b'];
+    $c = (3 * $a - $b) / 2;
+  }
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vježba 2-4 — Formula c = (3a – b) / 2</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:     #0f1117;
+      --card:   #ffffff;
+      --text:   #1a1a1a;
+      --muted:  #6b7280;
+      --accent: #2563eb;
+      --border: #d1d5db;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 48px auto;
+      background: var(--card);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .formula {
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+      color: var(--muted);
+    }
+
+    .formula strong {
+      color: var(--text);
+    }
+
+    /* --- Forma --- */
+    .form-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      min-width: 110px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .form-group input[type="number"] {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      width: 200px;
+      color: var(--text);
+    }
+
+    .form-group input[type="number"]:focus {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--accent);
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn:active {
+      opacity: 0.8;
+    }
+
+    /* --- Rezultat --- */
+    .result {
+      margin-top: 28px;
+      padding: 20px 24px;
+      background: #eff6ff;
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .result p {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .result .result-val {
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0;
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <h1>Formula c = (3a – b) / 2</h1>
+    <p class="formula">
+      Unesite vrijednosti <strong>a</strong> i <strong>b</strong>,
+      a program će izračunati <strong>c = (3a – b) / 2</strong>.
+    </p>
+
+    <form method="GET" action="vjezba2-4.php">
+      <div class="form-group">
+        <label for="a">Vrijednost a:</label>
+        <input
+          type="number"
+          id="a"
+          name="a"
+          step="any"
+          value="<?php echo $a !== null ? htmlspecialchars($_GET['a']) : ''; ?>"
+        >
+      </div>
+      <div class="form-group">
+        <label for="b">Vrijednost b:</label>
+        <input
+          type="number"
+          id="b"
+          name="b"
+          step="any"
+          value="<?php echo $b !== null ? htmlspecialchars($_GET['b']) : ''; ?>"
+        >
+      </div>
+      <button type="submit" class="btn">Pošalji</button>
+    </form>
+
+    <?php if ($c !== null): ?>
+      <div class="result">
+        <p>IZLAZ — rezultat za a = <?php echo $a; ?>, b = <?php echo $b; ?>:</p>
+        <p class="result-val">c = <?php echo $c; ?></p>
+      </div>
+    <?php endif; ?>
+
+    <footer>
+      &copy; <?php echo date("Y"); ?> &mdash; Vježba 2-4
+    </footer>
+  </div>
+
+</body>
+<!-- vjezba2-4.php -->
+</html>
