@@ -1,0 +1,227 @@
+<?php
+  $naslov = "PHP dokument — vježba 1d";
+  $autor  = "Ema Čurla";
+  $opis   = "Ova stranica nadograđuje vježbu 1c: biramo temu (dark/light), odabiremo sliku i po želji prikazujemo opis.";
+
+  $tema  = isset($_GET['tema'])  ? $_GET['tema']  : "dark";
+  $slika = isset($_GET['slika']) ? $_GET['slika'] : "php";
+  $prikaziOpis = isset($_GET['opis']);
+
+  $dozvoljeneSlika = ["php", "server", "code"];
+  if (!in_array($slika, $dozvoljeneSlika)) $slika = "php";
+  if ($tema !== "light") $tema = "dark";
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?php echo $naslov; ?></title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:     <?php echo $tema === "dark" ? "#0f1117" : "#e5e7eb"; ?>;
+      --card:   <?php echo $tema === "dark" ? "#1e2330" : "#ffffff"; ?>;
+      --text:   <?php echo $tema === "dark" ? "#f1f5f9" : "#1a1a1a"; ?>;
+      --muted:  <?php echo $tema === "dark" ? "#94a3b8" : "#6b7280"; ?>;
+      --accent: #2563eb;
+      --border: <?php echo $tema === "dark" ? "#2d3748" : "#d1d5db"; ?>;
+      --input:  <?php echo $tema === "dark" ? "#2d3748" : "#f9fafb"; ?>;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 48px auto;
+      background: var(--card);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    .slika {
+      display: block;
+      max-width: 100%;
+      width: 300px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* --- Forma --- */
+    fieldset {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    legend {
+      font-size: 0.9rem;
+      color: var(--muted);
+      padding: 0 6px;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+
+    .label-text {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    select {
+      display: block;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--input);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--accent);
+      background: transparent;
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .btn:active {
+      opacity: 0.8;
+    }
+
+    footer {
+      margin-top: 24px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn, body { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <h1><?php echo $naslov; ?></h1>
+
+    <p>Ovu stranicu izradio/la je <strong><?php echo $autor; ?></strong>.</p>
+
+    <img
+      class="slika"
+      src="img/<?php echo $slika; ?>.png"
+      alt="Odabrana slika: <?php echo $slika; ?>"
+    >
+
+    <?php if ($prikaziOpis): ?>
+      <p><?php echo $opis; ?></p>
+    <?php endif; ?>
+
+    <form method="GET" action="vjezba1d.php">
+
+      <fieldset>
+        <legend>Odaberi temu</legend>
+        <label>
+          <input type="radio" name="tema" value="dark"
+            <?php echo $tema === "dark"  ? "checked" : ""; ?>>
+          Dark
+        </label>
+        <label>
+          <input type="radio" name="tema" value="light"
+            <?php echo $tema === "light" ? "checked" : ""; ?>>
+          Light
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Odaberi sliku</legend>
+        <span class="label-text">Slika:</span>
+        <select name="slika">
+          <option value="php"    <?php echo $slika === "php"    ? "selected" : ""; ?>>PHP</option>
+          <option value="server" <?php echo $slika === "server" ? "selected" : ""; ?>>Server</option>
+          <option value="code"   <?php echo $slika === "code"   ? "selected" : ""; ?>>Code</option>
+        </select>
+      </fieldset>
+
+      <label>
+        <input type="checkbox" name="opis" <?php echo $prikaziOpis ? "checked" : ""; ?>>
+        Prikaži opis
+      </label>
+
+      <div class="btn-group">
+        <button type="submit" class="btn">Primijeni odabir</button>
+        <a class="btn" href="vjezba1c.php">Natrag na vježba 1c</a>
+      </div>
+
+    </form>
+
+    <footer>
+      &copy; <?php echo date("Y"); ?> &mdash; Demo za PHP
+    </footer>
+  </div>
+
+</body>
+<!-- vjezba1d.php -->
+</html>
