@@ -89,7 +89,7 @@
     <h1>PHP dokument</h1>
  
     <p>
-      Ovu stranicu izradio/la je <strong><?php echo "Ime Prezime"; ?></strong>.
+      Ovu stranicu izradio/la je <strong><?php echo "Ema Čurla"; ?></strong>.
     </p>
  
     <p>
