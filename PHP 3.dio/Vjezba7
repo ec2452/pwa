@@ -1,0 +1,388 @@
+<?php
+// Vježba 7 - Polja podataka (Array)
+
+$ocjene = [];
+$prosjek = null;
+$konacna = null;
+$poruka = "";
+$greska = "";
+
+function ocjena_rijecima($ocjena) {
+    $mapa = [1 => "Nedovoljan (1)", 2 => "Dovoljan (2)", 3 => "Dobar (3)", 4 => "Vrlo dobar (4)", 5 => "Odličan (5)"];
+    return $mapa[$ocjena] ?? "-";
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $k1 = $_POST["kol1"] ?? "";
+    $k2 = $_POST["kol2"] ?? "";
+
+    if ($k1 === "" || $k2 === "") {
+        $greska = "Molimo unesite obje ocjene!";
+    } elseif (!is_numeric($k1) || !is_numeric($k2)) {
+        $greska = "Ocjene moraju biti brojevi!";
+    } else {
+        $k1 = (int)$k1;
+        $k2 = (int)$k2;
+
+        if ($k1 < 1 || $k1 > 5 || $k2 < 1 || $k2 > 5) {
+            $greska = "Ocjena ne smije biti manja od 1 ili veća od 5!";
+        } else {
+            $ocjene = ["I. Kolokvij" => $k1, "II. Kolokvij" => $k2];
+            $prosjek = array_sum($ocjene) / count($ocjene);
+
+            if ($k1 < 2 || $k2 < 2) {
+                $konacna = 1;
+                $poruka = "negativna";
+            } else {
+                $konacna = round($prosjek);
+                $poruka = "pozitivna";
+            }
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <title>Vježba 7 – Ocjene kolokvija</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --white: #ffffff;
+      --primary: #2d3a8c;
+      --primary-light: #eef0fb;
+      --accent: #e84855;
+      --accent-pos: #2ec4b6;
+      --text: #1a1a2e;
+      --muted: #6b7a99;
+      --border: #dde3f0;
+      --shadow: 0 8px 32px rgba(45,58,140,0.10);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background-image: radial-gradient(ellipse at 10% 0%, rgba(45,58,140,0.07) 0%, transparent 60%),
+                        radial-gradient(ellipse at 90% 100%, rgba(46,196,182,0.07) 0%, transparent 60%);
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 36px 40px;
+      border: 1px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.05rem;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(45,58,140,0.10);
+      background: #fff;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn:hover { background: #1e2a6e; transform: translateY(-2px); }
+    .btn:active { transform: translateY(0); }
+
+    /* Error */
+    .alert-error {
+      background: #fff0f1;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Results */
+    .results {
+      margin-top: 30px;
+      border-top: 2px dashed var(--border);
+      padding-top: 26px;
+    }
+
+    .results h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--primary);
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .table-wrap {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: var(--primary-light);
+    }
+
+    th {
+      padding: 11px 16px;
+      text-align: left;
+      font-size: 0.78rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    td {
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      color: var(--text);
+      border-top: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    td.ocjena-val {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--primary);
+    }
+
+    .prosjek-row td {
+      background: var(--primary-light);
+      font-weight: 700;
+    }
+
+    /* Final badge */
+    .final-badge {
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .final-badge.pozitivna {
+      background: rgba(46,196,182,0.10);
+      border: 2px solid var(--accent-pos);
+    }
+
+    .final-badge.negativna {
+      background: rgba(232,72,85,0.08);
+      border: 2px solid var(--accent);
+    }
+
+    .final-badge .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .final-badge .value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+    }
+
+    .final-badge.pozitivna .value { color: var(--accent-pos); }
+    .final-badge.negativna .value { color: var(--accent); }
+
+    .final-badge .status-pill {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 50px;
+      letter-spacing: 0.5px;
+    }
+
+    .pozitivna .status-pill { background: var(--accent-pos); color: #fff; }
+    .negativna .status-pill { background: var(--accent); color: #fff; }
+
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <header>
+    <h1>Ocjene Kolokvija</h1>
+    <p>Unesite ocjene I. i II. kolokvija za izračun prosjeka</p>
+  </header>
+
+  <div class="card">
+
+    <?php if ($greska): ?>
+      <div class="alert-error">⚠️ <?= htmlspecialchars($greska) ?></div>
+    <?php endif; ?>
+
+    <form method="POST" action="">
+
+      <div class="form-group">
+        <label for="kol1">Ocjena I. kolokvija</label>
+        <input type="number" id="kol1" name="kol1" min="1" max="5"
+               value="<?= htmlspecialchars($_POST['kol1'] ?? '') ?>"
+               placeholder="Unesite ocjenu (1–5)">
+        <p class="hint">Ocjena mora biti između 1 i 5</p>
+      </div>
+
+      <div class="form-group">
+        <label for="kol2">Ocjena II. kolokvija</label>
+        <input type="number" id="kol2" name="kol2" min="1" max="5"
+               value="<?= htmlspecialchars($_POST['kol2'] ?? '') ?>"
+               placeholder="Unesite ocjenu (1–5)">
+        <p class="hint">Ocjena mora biti između 1 i 5</p>
+      </div>
+
+      <button type="submit" class="btn">Izračunaj ocjenu →</button>
+
+    </form>
+
+    <?php if ($prosjek !== null): ?>
+    <div class="results">
+      <h2>Rezultati</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Kolokvij</th>
+              <th>Ocjena</th>
+              <th>Opis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($ocjene as $naziv => $ocj): ?>
+            <tr>
+              <td><?= $naziv ?></td>
+              <td class="ocjena-val"><?= $ocj ?></td>
+              <td><?= ocjena_rijecima($ocj) ?></td>
+            </tr>
+            <?php endforeach; ?>
+            <tr class="prosjek-row">
+              <td>Prosjek</td>
+              <td class="ocjena-val"><?= number_format($prosjek, 2) ?></td>
+              <td>Aritmetička sredina</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="final-badge <?= $poruka ?>">
+        <div>
+          <div class="label">Konačna ocjena</div>
+          <div class="value"><?= ocjena_rijecima($konacna) ?></div>
+        </div>
+        <span class="status-pill">
+          <?= $poruka === 'pozitivna' ? '✓ POLOŽENO' : '✗ NIJE POLOŽENO' ?>
+        </span>
+      </div>
+
+    </div>
+    <?php endif; ?>
+
+  </div>
+
+  <footer>Vježba 7 &nbsp;·&nbsp; Polja podataka (Array)</footer>
+
+</div>
+
+</body>
+</html>
