@@ -1,0 +1,626 @@
+<?php
+// ── Sve u jednom fajlu — session zadatak ──
+session_start();
+
+$poruka  = null;
+$obrisan = false;
+
+// ── Brisanje sesije ──
+if (isset($_GET["obrisi"])) {
+    $_SESSION = [];
+    session_destroy();
+    $obrisan = true;
+}
+
+// ── Postavljanje sesije (POST) ──
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !$obrisan) {
+    $korisnik = trim($_POST["korisnik"] ?? "");
+    $tema     = trim($_POST["tema"]     ?? "");
+    $vijesti  = isset($_POST["vijesti"]) ? implode(",", $_POST["vijesti"]) : "";
+
+    if ($korisnik !== "" && $tema !== "") {
+        $_SESSION["ses_korisnik"] = $korisnik;
+        $_SESSION["ses_tema"]     = $tema;
+        $_SESSION["ses_vijesti"]  = $vijesti;
+        $_SESSION["ses_datum"]    = date("d.m.Y H:i:s");
+
+        $poruka = "uspjeh";
+    } else {
+        $poruka = "greska";
+    }
+}
+
+// ── Čitanje sesije ──
+$ses_korisnik = $_SESSION["ses_korisnik"] ?? null;
+$ses_tema     = $_SESSION["ses_tema"]     ?? null;
+$ses_vijesti  = $_SESSION["ses_vijesti"]  ?? null;
+$ses_datum    = $_SESSION["ses_datum"]    ?? null;
+
+$kategorijeVijesti = [];
+if ($ses_vijesti && $ses_vijesti !== "") {
+    $kategorijeVijesti = explode(",", $ses_vijesti);
+}
+
+// Aktivni tab
+$tab = $_GET["tab"] ?? "postavi";
+if ($poruka === "uspjeh") $tab = "citaj";
+
+// Ikone kategorija
+$ikone = [
+    "sport"       => "⚽",
+    "tehnologija" => "💻",
+    "politika"    => "🏛️",
+    "kultura"     => "🎭",
+    "ekonomija"   => "📈",
+];
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session zadatak — vjezba-session.php</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px 20px;
+        }
+
+        /* ── Kartica ── */
+        .kartica {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 580px;
+            overflow: hidden;
+        }
+
+        /* ── Zaglavlje ── */
+        .zaglavlje {
+            background: linear-gradient(135deg, #134e5e, #1a7a5e);
+            color: #fff;
+            padding: 24px 32px;
+        }
+
+        .zaglavlje h1 { font-size: 20px; font-weight: 800; margin-bottom: 5px; }
+
+        .zaglavlje p { font-size: 13px; opacity: .78; line-height: 1.5; }
+
+        .zaglavlje code {
+            background: rgba(255,255,255,.2);
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        /* ── Razlika cookie vs session info ── */
+        .info-razlika {
+            background: #e8f5e9;
+            border-left: 4px solid #43a047;
+            padding: 12px 18px;
+            font-size: 13px;
+            color: #2e7d32;
+            line-height: 1.6;
+        }
+
+        .info-razlika strong { font-weight: 700; }
+
+        /* ── Tabovi ── */
+        .tab-row {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-row a {
+            flex: 1;
+            text-align: center;
+            padding: 14px 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #888;
+            text-decoration: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all .2s;
+        }
+
+        .tab-row a:hover { color: #134e5e; }
+
+        .tab-row a.aktivan {
+            color: #134e5e;
+            border-bottom-color: #134e5e;
+        }
+
+        /* ── Tijelo ── */
+        .tijelo { padding: 28px 32px; }
+
+        /* ── Notifikacije ── */
+        .notif {
+            border-radius: 8px;
+            padding: 13px 16px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .notif a { font-weight: 800; }
+
+        .notif-uspjeh  { background: #e8f5e9; border-left: 4px solid #43a047; color: #2e7d32; }
+        .notif-greska  { background: #fdecea; border-left: 4px solid #e53935; color: #c62828; }
+        .notif-info    { background: #fff8e1; border-left: 4px solid #ffc107; color: #795548; }
+        .notif-obrisan { background: #fdecea; border-left: 4px solid #e53935; color: #c62828; }
+
+        /* ── Forma ── */
+        .polje { margin-bottom: 18px; }
+
+        .polje label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 7px;
+        }
+
+        .polje input[type="text"],
+        .polje select {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color .2s;
+            color: #222;
+            background: #fff;
+        }
+
+        .polje input[type="text"]:focus,
+        .polje select:focus { border-color: #134e5e; }
+
+        /* Checkboxovi */
+        .checkbox-grupa { display: flex; flex-direction: column; gap: 8px; }
+
+        .check-redak {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .check-redak:hover { border-color: #134e5e; background: #f0faf5; }
+
+        .check-redak input[type="checkbox"] {
+            accent-color: #134e5e;
+            width: 16px; height: 16px;
+            cursor: pointer;
+        }
+
+        .check-redak span { font-size: 14px; color: #333; font-weight: 500; }
+
+        /* Gumbi */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity .2s;
+        }
+
+        .btn:hover { opacity: .88; }
+        .btn-postavi { background: linear-gradient(135deg, #134e5e, #1a7a5e); }
+        .btn-obrisi  { background: linear-gradient(135deg, #c62828, #e53935); margin-top: 10px; }
+
+        /* ── Info redci ── */
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .info-redak {
+            display: flex;
+            align-items: flex-start;
+            background: #fff;
+            padding: 14px 18px;
+            gap: 14px;
+        }
+
+        .info-ikona { font-size: 20px; width: 28px; flex-shrink: 0; margin-top: 1px; }
+        .info-sadrzaj { flex: 1; }
+
+        .info-oznaka {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: #999;
+            font-weight: 700;
+            margin-bottom: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .info-vrijednost { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+
+        /* Chipovi */
+        .chip-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+
+        .chip {
+            background: linear-gradient(135deg, #134e5e, #1a7a5e);
+            color: #fff;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Session ID blok */
+        .session-id-blok {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #2e7d32;
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+
+        .session-id-blok .oznaka {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 4px;
+            color: #388e3c;
+        }
+
+        /* Sirovi ispis */
+        .raw-blok {
+            background: #1e1e2e;
+            color: #a6e3a1;
+            border-radius: 10px;
+            padding: 16px 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .raw-blok .k { color: #cba6f7; }
+        .raw-blok .v { color: #fab387; }
+
+        /* Usporedba cookie vs session */
+        .usporedba {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .us-box {
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .us-cookie {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            color: #e65100;
+        }
+
+        .us-session {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            color: #2e7d32;
+        }
+
+        .us-box strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 800;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 11px;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="kartica">
+
+    <!-- Zaglavlje -->
+    <div class="zaglavlje">
+        <h1>&#128274; Session zadatak</h1>
+        <p>
+            Jedan fajl — <code>session_start()</code> za pokretanje,
+            <code>$_SESSION</code> za pohranu i čitanje podataka sjednice.
+        </p>
+    </div>
+
+    <!-- Info razlika cookie vs session -->
+    <div class="info-razlika">
+        &#128161; <strong>Razlika:</strong>
+        Cookie se sprema na <strong>klijentovom računalu</strong>.
+        Session se sprema na <strong>serveru</strong> — u pregledniku ostaje samo ID sesije (PHPSESSID).
+    </div>
+
+    <!-- Tabovi -->
+    <div class="tab-row">
+        <a href="?tab=postavi" class="<?php echo ($tab === 'postavi') ? 'aktivan' : ''; ?>">
+            &#9881; Postavi sesiju
+        </a>
+        <a href="?tab=citaj" class="<?php echo ($tab === 'citaj') ? 'aktivan' : ''; ?>">
+            &#128214; Čitaj sesiju
+        </a>
+        <a href="?tab=usporedba" class="<?php echo ($tab === 'usporedba') ? 'aktivan' : ''; ?>">
+            &#9878; Cookie vs Session
+        </a>
+    </div>
+
+    <div class="tijelo">
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- TAB 1: POSTAVI SESIJU                         -->
+    <!-- ══════════════════════════════════════════════ -->
+    <?php if ($tab === "postavi"): ?>
+
+        <?php if ($poruka === "greska"): ?>
+            <div class="notif notif-greska">&#9888; Molimo unesite korisničko ime i odaberite temu!</div>
+        <?php endif; ?>
+
+        <form method="POST" action="?tab=postavi">
+
+            <!-- Korisničko ime -->
+            <div class="polje">
+                <label for="korisnik">&#128100; Korisničko ime</label>
+                <input type="text" id="korisnik" name="korisnik"
+                       placeholder="Unesite vaše ime..."
+                       value="<?php echo htmlspecialchars($_POST['korisnik'] ?? $ses_korisnik ?? ''); ?>">
+            </div>
+
+            <!-- Tema -->
+            <div class="polje">
+                <label for="tema">&#127912; Tema stranice</label>
+                <select id="tema" name="tema">
+                    <option value="">— Odaberite temu —</option>
+                    <?php
+                    $teme = [
+                        "svijetla" => "☀️ Svijetla tema",
+                        "tamna"    => "🌙 Tamna tema",
+                        "zelena"   => "🌿 Zelena tema",
+                    ];
+                    $trenutnaTema = $_POST['tema'] ?? $ses_tema ?? '';
+                    foreach ($teme as $val => $naziv):
+                    ?>
+                    <option value="<?php echo $val; ?>"
+                        <?php echo ($trenutnaTema === $val) ? 'selected' : ''; ?>>
+                        <?php echo $naziv; ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Kategorije vijesti -->
+            <div class="polje">
+                <label>&#128240; Kategorije vijesti</label>
+                <div class="checkbox-grupa">
+                    <?php
+                    $kategorije = [
+                        "sport"       => "⚽ Sport",
+                        "tehnologija" => "💻 Tehnologija",
+                        "politika"    => "🏛️ Politika",
+                        "kultura"     => "🎭 Kultura",
+                        "ekonomija"   => "📈 Ekonomija",
+                    ];
+                    $provjeriVijesti = $_POST['vijesti'] ?? $kategorijeVijesti;
+                    foreach ($kategorije as $val => $naziv):
+                        $checked = in_array($val, $provjeriVijesti) ? 'checked' : '';
+                    ?>
+                    <label class="check-redak">
+                        <input type="checkbox" name="vijesti[]"
+                               value="<?php echo $val; ?>" <?php echo $checked; ?>>
+                        <span><?php echo $naziv; ?></span>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-postavi">
+                &#128274; Spremi u sesiju ($_SESSION)
+            </button>
+        </form>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- TAB 2: ČITAJ SESIJU                           -->
+    <!-- ══════════════════════════════════════════════ -->
+    <?php elseif ($tab === "citaj"): ?>
+
+        <?php if ($obrisan): ?>
+            <div class="notif notif-obrisan">
+                &#10060; Sesija je uništena (session_destroy)!
+                Idi na tab
+                <a href="?tab=postavi" style="color:#c62828">Postavi sesiju</a>.
+            </div>
+
+        <?php elseif ($poruka === "uspjeh"): ?>
+            <div class="notif notif-uspjeh">
+                &#9989; Sesija je uspješno postavljena i prikazana ispod!
+            </div>
+
+        <?php elseif ($ses_korisnik === null || $ses_korisnik === ""): ?>
+            <div class="notif notif-info">
+                &#9888; Nema aktivne sesije!
+                Idi na tab
+                <a href="?tab=postavi" style="color:#795548">Postavi sesiju</a>
+                i unesi podatke.
+            </div>
+        <?php endif; ?>
+
+        <?php if ($ses_korisnik && !$obrisan): ?>
+
+            <!-- Session ID -->
+            <div class="session-id-blok">
+                <div class="oznaka">&#128273; Session ID (PHPSESSID)</div>
+                <?php echo session_id(); ?>
+            </div>
+
+            <!-- Prikaz podataka -->
+            <div class="info-grid">
+                <div class="info-redak">
+                    <div class="info-ikona">&#128100;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_SESSION["ses_korisnik"]</div>
+                        <div class="info-vrijednost"><?php echo htmlspecialchars($ses_korisnik); ?></div>
+                    </div>
+                </div>
+
+                <div class="info-redak">
+                    <div class="info-ikona">&#127912;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_SESSION["ses_tema"]</div>
+                        <div class="info-vrijednost"><?php echo htmlspecialchars(ucfirst($ses_tema ?? "—")); ?> tema</div>
+                    </div>
+                </div>
+
+                <div class="info-redak">
+                    <div class="info-ikona">&#128240;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_SESSION["ses_vijesti"]</div>
+                        <?php if (!empty($kategorijeVijesti) && $kategorijeVijesti[0] !== ""): ?>
+                            <div class="chip-wrap">
+                                <?php foreach ($kategorijeVijesti as $kat): ?>
+                                    <span class="chip">
+                                        <?php echo ($ikone[$kat] ?? "") . " " . htmlspecialchars(ucfirst($kat)); ?>
+                                    </span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="info-vrijednost">—</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="info-redak">
+                    <div class="info-ikona">&#128197;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_SESSION["ses_datum"]</div>
+                        <div class="info-vrijednost"><?php echo htmlspecialchars($ses_datum ?? "—"); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sirovi ispis $_SESSION -->
+            <div class="raw-blok"><span class="k">$_SESSION</span> = [
+  <span class="k">"ses_korisnik"</span> =&gt; <span class="v">"<?php echo htmlspecialchars($ses_korisnik); ?>"</span>,
+  <span class="k">"ses_tema"</span>     =&gt; <span class="v">"<?php echo htmlspecialchars($ses_tema ?? ""); ?>"</span>,
+  <span class="k">"ses_vijesti"</span>  =&gt; <span class="v">"<?php echo htmlspecialchars($ses_vijesti ?? ""); ?>"</span>,
+  <span class="k">"ses_datum"</span>    =&gt; <span class="v">"<?php echo htmlspecialchars($ses_datum ?? ""); ?>"</span>,
+]
+
+<span class="k">session_id</span>() = <span class="v">"<?php echo session_id(); ?>"</span></div>
+
+            <!-- Gumb brisanje sesije -->
+            <a href="?tab=citaj&obrisi=1" class="btn btn-obrisi">
+                &#10060; Uništi sesiju (session_destroy)
+            </a>
+
+        <?php endif; ?>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- TAB 3: COOKIE vs SESSION                      -->
+    <!-- ══════════════════════════════════════════════ -->
+    <?php elseif ($tab === "usporedba"): ?>
+
+        <div class="usporedba">
+            <div class="us-box us-cookie">
+                <strong>&#127850; Cookie (setcookie)</strong>
+                Sprema se na <strong>klijentovom računalu</strong> u preglednika.<br><br>
+                Ima rok trajanja (expiry time).<br><br>
+                Može trajati i nakon zatvaranja preglednika.<br><br>
+                Max veličina ~4KB.<br><br>
+                Korisnik može vidjeti i mijenjati.
+            </div>
+            <div class="us-box us-session">
+                <strong>&#128274; Session ($_SESSION)</strong>
+                Sprema se na <strong>serveru</strong>.<br><br>
+                Traje dok je preglednik otvoren (ili do timeout-a).<br><br>
+                Briše se zatvaranjem preglednika.<br><br>
+                Nema ograničenja veličine.<br><br>
+                Korisnik ne može direktno mijenjati.
+            </div>
+        </div>
+
+        <div class="raw-blok"><span class="k">// Cookie — postavljanje</span>
+<span class="k">setcookie</span>(<span class="v">"ime"</span>, <span class="v">"vrijednost"</span>, time() + 3600, <span class="v">"/"</span>);
+
+<span class="k">// Cookie — čitanje</span>
+$ime = <span class="k">$_COOKIE</span>[<span class="v">"ime"</span>];
+
+<span class="k">// Session — pokretanje (UVIJEK PRVI!)</span>
+<span class="k">session_start</span>();
+
+<span class="k">// Session — postavljanje</span>
+<span class="k">$_SESSION</span>[<span class="v">"ime"</span>] = <span class="v">"vrijednost"</span>;
+
+<span class="k">// Session — čitanje</span>
+$ime = <span class="k">$_SESSION</span>[<span class="v">"ime"</span>];
+
+<span class="k">// Session — brisanje</span>
+<span class="k">$_SESSION</span> = [];
+<span class="k">session_destroy</span>();</div>
+
+    <?php endif; ?>
+
+    </div><!-- /tijelo -->
+
+    <div class="footer">
+        vjezba-session.php &bull; session_start() + $_SESSION
+        <?php if (session_status() === PHP_SESSION_ACTIVE && !$obrisan): ?>
+            &bull; Session aktivan: <strong><?php echo substr(session_id(), 0, 12); ?>...</strong>
+        <?php endif; ?>
+    </div>
+
+</div>
+
+</body>
+</html>
+<!-- vjezba-session.php -->
