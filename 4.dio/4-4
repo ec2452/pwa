@@ -1,0 +1,398 @@
+<?php
+// ── Funkcija koja provjerava je li broj prost ──
+function jeProst(int $broj): bool {
+    // Broj mora biti strogo veći od 1
+    if ($broj <= 1) {
+        return false;
+    }
+    // Provjeravamo djeljitelje od 2 do kvadratnog korijena broja
+    for ($i = 2; $i <= sqrt($broj); $i++) {
+        if ($broj % $i === 0) {
+            return false; // Broj je djeljiv — nije prost
+        }
+    }
+    return true; // Broj je prost
+}
+
+// ── Prikupljamo sve proste brojeve manje od 100 ──
+$prostiBrojevi = [];
+for ($n = 2; $n < 100; $n++) {
+    if (jeProst($n)) {
+        $prostiBrojevi[] = $n;
+    }
+}
+
+// ── Provjera korisničkog unosa ──
+$unesenibroj   = null;
+$rezultatUnosa = null;
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["broj"] !== "") {
+    $unesenibroj   = (int)$_POST["broj"];
+    $rezultatUnosa = jeProst($unesenibroj);
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prosti brojevi — vježba 4-4</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 680px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* ── Kartica ── */
+        .kartica {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            overflow: hidden;
+        }
+
+        /* ── Zaglavlje ── */
+        .zaglavlje {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            padding: 26px 32px;
+        }
+
+        .zaglavlje h1 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .zaglavlje p {
+            font-size: 13px;
+            opacity: 0.72;
+            line-height: 1.55;
+        }
+
+        .tijelo { padding: 28px 32px; }
+
+        /* ── Definicija ── */
+        .definicija {
+            background: #f8f9ff;
+            border-left: 4px solid #534AB7;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6;
+        }
+
+        .definicija strong { color: #1a1a2e; }
+
+        /* ── Forma provjere ── */
+        .forma-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            margin-bottom: 16px;
+        }
+
+        .forma-row input[type="number"] {
+            flex: 1;
+            padding: 11px 14px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color .2s;
+            color: #222;
+        }
+
+        .forma-row input[type="number"]:focus {
+            border-color: #534AB7;
+        }
+
+        .btn {
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #1a1a2e, #534AB7);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity .2s;
+        }
+
+        .btn:hover { opacity: .88; }
+
+        /* ── Badge rezultata ── */
+        .rezultat-badge {
+            border-radius: 10px;
+            padding: 16px 20px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            animation: fadeIn .35s ease;
+        }
+
+        .badge-prost {
+            background: #e8f5e9;
+            border: 2px solid #a5d6a7;
+            color: #2e7d32;
+        }
+
+        .badge-nije {
+            background: #fdecea;
+            border: 2px solid #ef9a9a;
+            color: #c62828;
+        }
+
+        .badge-broj {
+            font-size: 28px;
+            font-weight: 900;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity:0; transform:translateY(8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        /* ── Separator ── */
+        .separator {
+            border: none;
+            border-top: 2px solid #f0f0f0;
+            margin: 22px 0;
+        }
+
+        /* ── Statistika ── */
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            flex: 1;
+            min-width: 120px;
+            background: linear-gradient(135deg, #1a1a2e, #534AB7);
+            color: #fff;
+            border-radius: 10px;
+            padding: 14px 16px;
+            text-align: center;
+        }
+
+        .stat-broj {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-opis {
+            font-size: 12px;
+            opacity: 0.75;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        /* ── Grid prostih brojeva ── */
+        .naslov-grid {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .grid-brojevi {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .broj-chip {
+            background: linear-gradient(135deg, #1a1a2e, #534AB7);
+            color: #fff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            min-width: 48px;
+            text-align: center;
+            transition: transform .15s, box-shadow .15s;
+            cursor: default;
+        }
+
+        .broj-chip:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(83,74,183,0.4);
+        }
+
+        /* Označimo uneseni broj u gridu */
+        .broj-chip.oznacen {
+            background: linear-gradient(135deg, #e53935, #c62828);
+            box-shadow: 0 4px 14px rgba(229,57,53,0.5);
+            transform: scale(1.12);
+        }
+
+        /* ── Kod prikaz ── */
+        .kod-blok {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            border-radius: 10px;
+            padding: 18px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .k-kw   { color: #cba6f7; } /* ključne riječi */
+        .k-fn   { color: #89b4fa; } /* funkcije */
+        .k-str  { color: #a6e3a1; } /* stringovi */
+        .k-num  { color: #fab387; } /* brojevi */
+        .k-kom  { color: #6c7086; font-style: italic; } /* komentari */
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 11px;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <!-- ── KARTICA 1: Provjera broja ── -->
+    <div class="kartica">
+        <div class="zaglavlje">
+            <h1>&#128300; Prosti brojevi</h1>
+            <p>Funkcija koja ispituje je li broj prost, te ispisuje sve proste brojeve manje od 100.</p>
+        </div>
+        <div class="tijelo">
+
+            <!-- Definicija -->
+            <div class="definicija">
+                <strong>Prosti broj</strong> je prirodni broj djeljiv bez ostatka <strong>samo brojem 1 i samim sobom</strong>,
+                te je strogo veći od broja 1.
+                <br>Primjeri: 2, 3, 5, 7, 11, 13, 17 ...
+            </div>
+
+            <!-- Forma za provjeru -->
+            <form method="POST" action="">
+                <div class="forma-row">
+                    <input type="number" name="broj"
+                           placeholder="Unesite broj za provjeru..."
+                           value="<?php echo htmlspecialchars($unesenibroj ?? ''); ?>">
+                    <button type="submit" class="btn">&#128269; Provjeri</button>
+                </div>
+            </form>
+
+            <!-- Rezultat provjere -->
+            <?php if ($rezultatUnosa !== null): ?>
+                <div class="rezultat-badge <?php echo $rezultatUnosa ? 'badge-prost' : 'badge-nije'; ?>">
+                    <span class="badge-broj"><?php echo $unesenibroj; ?></span>
+                    <?php if ($rezultatUnosa): ?>
+                        &#9989; Broj <strong><?php echo $unesenibroj; ?></strong> <strong>JEST</strong> prost broj.
+                    <?php else: ?>
+                        &#10060; Broj <strong><?php echo $unesenibroj; ?></strong> <strong>NIJE</strong> prost broj.
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
+            <hr class="separator">
+
+            <!-- Statistika -->
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-broj"><?php echo count($prostiBrojevi); ?></div>
+                    <div class="stat-opis">Prostih brojeva &lt; 100</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-broj"><?php echo $prostiBrojevi[0]; ?></div>
+                    <div class="stat-opis">Najmanji</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-broj"><?php echo end($prostiBrojevi); ?></div>
+                    <div class="stat-opis">Najveći &lt; 100</div>
+                </div>
+            </div>
+
+            <!-- Grid prostih brojeva -->
+            <p class="naslov-grid">&#128203; Svi prosti brojevi manji od 100:</p>
+            <div class="grid-brojevi">
+                <?php foreach ($prostiBrojevi as $pb):
+                    $jeOznacen = ($rezultatUnosa === true && $pb === $unesenibroj);
+                ?>
+                    <div class="broj-chip <?php echo $jeOznacen ? 'oznacen' : ''; ?>">
+                        <?php echo $pb; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+        </div>
+        <div class="footer">vjezba4-4.php</div>
+    </div>
+
+    <!-- ── KARTICA 2: Prikaz koda funkcije ── -->
+    <div class="kartica">
+        <div class="zaglavlje">
+            <h1>&#128187; Kod funkcije <code style="background:rgba(255,255,255,.15);padding:2px 8px;border-radius:5px;font-size:16px;">jeProst()</code></h1>
+            <p>PHP funkcija koja provjerava je li uneseni broj prost</p>
+        </div>
+        <div class="tijelo">
+            <div class="kod-blok"><span class="k-kw">function</span> <span class="k-fn">jeProst</span>(<span class="k-kw">int</span> $broj): <span class="k-kw">bool</span> {
+
+    <span class="k-kom">// Broj mora biti strogo veći od 1</span>
+    <span class="k-kw">if</span> ($broj &lt;= <span class="k-num">1</span>) {
+        <span class="k-kw">return false</span>;
+    }
+
+    <span class="k-kom">// Provjeravamo djeljitelje od 2 do sqrt(broja)</span>
+    <span class="k-kw">for</span> ($i = <span class="k-num">2</span>; $i &lt;= <span class="k-fn">sqrt</span>($broj); $i++) {
+        <span class="k-kw">if</span> ($broj % $i === <span class="k-num">0</span>) {
+            <span class="k-kw">return false</span>; <span class="k-kom">// Nije prost</span>
+        }
+    }
+
+    <span class="k-kw">return true</span>; <span class="k-kom">// Broj je prost</span>
+}
+
+<span class="k-kom">// Ispis svih prostih brojeva manjih od 100</span>
+<span class="k-kw">for</span> ($n = <span class="k-num">2</span>; $n &lt; <span class="k-num">100</span>; $n++) {
+    <span class="k-kw">if</span> (<span class="k-fn">jeProst</span>($n)) {
+        <span class="k-fn">echo</span> <span class="k-str">"$n "</span>;
+    }
+}</div>
+        </div>
+        <div class="footer">vjezba4-4.php &bull; Koristite sqrt() za optimalan algoritam</div>
+    </div>
+
+</div><!-- /wrapper -->
+</body>
+</html>
+<!-- vjezba4-4.php -->
