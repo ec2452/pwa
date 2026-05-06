@@ -1,0 +1,420 @@
+<?php
+// ── Trenutno vrijeme i dan ──
+$dan    = date("D");   // Mon, Tue, Wed, Thu, Fri, Sat, Sun
+$sat    = (int)date("H"); // 0–23
+$datum  = date("d.m.Y");
+$vrijemeIspis = date("H:i");
+$danHR  = [
+    "Mon" => "Ponedjeljak",
+    "Tue" => "Utorak",
+    "Wed" => "Srijeda",
+    "Thu" => "Četvrtak",
+    "Fri" => "Petak",
+    "Sat" => "Subota",
+    "Sun" => "Nedjelja",
+];
+$danPuni = $danHR[$dan];
+
+// ── Hrvatski državni praznici i blagdani ──
+$praznici = [
+    "01.01" => "Nova godina",
+    "06.01" => "Sveta tri kralja (Bogojavljenje)",
+    "01.05" => "Međunarodni praznik rada",
+    "30.05" => "Dan državnosti",
+    "22.06" => "Dan antifašističke borbe",
+    "05.08" => "Dan domovinske zahvalnosti",
+    "15.08" => "Velika Gospa (Uznesenje Blažene Djevice Marije)",
+    "01.11" => "Svi sveti",
+    "18.11" => "Dan sjećanja na žrtve Domovinskog rata",
+    "25.12" => "Božić",
+    "26.12" => "Sveti Stjepan",
+];
+
+// Uskrs (promjenjivi blagdani — izračun za tekuću godinu)
+$godina = (int)date("Y");
+
+// Gauss algoritam za datum Uskrsa
+function izracunajUskrs($g) {
+    $a = $g % 19;
+    $b = intdiv($g, 100);
+    $c = $g % 100;
+    $d = intdiv($b, 4);
+    $e = $b % 4;
+    $f = intdiv($b + 8, 25);
+    $gg = intdiv($b - $f + 1, 3);
+    $h = (19 * $a + $b - $d - $gg + 15) % 30;
+    $i = intdiv($c, 4);
+    $k = $c % 4;
+    $l = (32 + 2 * $e + 2 * $i - $h - $k) % 7;
+    $m = intdiv($a + 11 * $h + 22 * $l, 451);
+    $mj = intdiv($h + $l - 7 * $m + 114, 31);
+    $dan_u = (($h + $l - 7 * $m + 114) % 31) + 1;
+    return mktime(0, 0, 0, $mj, $dan_u, $g);
+}
+
+$uskrs     = izracunajUskrs($godina);
+$velikaPet = date("d.m", strtotime("-2 days", $uskrs));
+$uskrsPon  = date("d.m", strtotime("+1 day",  $uskrs));
+$tijeloKri = date("d.m", strtotime("+60 days", $uskrs));
+
+$praznici[$velikaPet] = "Veliki petak";
+$praznici[date("d.m", $uskrs)] = "Uskrs";
+$praznici[$uskrsPon]  = "Uskrsni ponedjeljak";
+$praznici[$tijeloKri] = "Tijelovo";
+
+// ── Provjera je li danas praznik ──
+$danasKljuc = date("d.m");
+$jePraznik  = array_key_exists($danasKljuc, $praznici);
+$imePraznika = $jePraznik ? $praznici[$danasKljuc] : null;
+
+// ── Logika otvoreno/zatvoreno ──
+$status       = "";
+$radnoVrijeme = "";
+$css_status   = "";
+
+if ($jePraznik) {
+    $status       = "ZATVORENO";
+    $radnoVrijeme = "Državni praznik / blagdan";
+    $css_status   = "zatvoreno";
+} elseif ($dan === "Sun") {
+    $status       = "ZATVORENO";
+    $radnoVrijeme = "Nedjeljom ne radimo";
+    $css_status   = "zatvoreno";
+} elseif ($dan === "Sat") {
+    $radnoVrijeme = "Subotom: 09:00 – 14:00";
+    if ($sat >= 9 && $sat < 14) {
+        $status     = "OTVORENO";
+        $css_status = "otvoreno";
+    } else {
+        $status     = "ZATVORENO";
+        $css_status = "zatvoreno";
+    }
+} else {
+    // Radni dani (pon–pet)
+    $radnoVrijeme = "Radnim danom: 08:00 – 20:00";
+    if ($sat >= 8 && $sat < 20) {
+        $status     = "OTVORENO";
+        $css_status = "otvoreno";
+    } else {
+        $status     = "ZATVORENO";
+        $css_status = "zatvoreno";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radno vrijeme dućana — vježba 4-2</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ── Kartica ── */
+        .kartica {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        /* ── Zaglavlje ── */
+        .zaglavlje {
+            background: linear-gradient(135deg, #1a1a2e, #0f3460);
+            color: #fff;
+            padding: 32px 36px 24px;
+            text-align: center;
+        }
+
+        .shop-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .zaglavlje h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: .5px;
+        }
+
+        .zaglavlje .adresa {
+            font-size: 13px;
+            opacity: 0.65;
+        }
+
+        /* ── Status blok ── */
+        .status-blok {
+            padding: 28px 36px;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 32px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        .otvoreno  .status-badge { background: #e8f5e9; color: #2e7d32; border: 2px solid #a5d6a7; }
+        .zatvoreno .status-badge { background: #fdecea; color: #c62828; border: 2px solid #ef9a9a; }
+
+        .radno-vrijeme-tekst {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        /* ── Praznik obavijest ── */
+        .praznik-info {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #f57f17;
+            margin: 0 36px 20px;
+            text-align: center;
+        }
+
+        /* ── Sat i datum ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: #f0f0f0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-celija {
+            background: #fff;
+            padding: 18px 24px;
+            text-align: center;
+        }
+
+        .info-celija .oznaka {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+
+        .info-celija .vrijednost {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .info-celija .podnaslov {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* ── Raspored ── */
+        .raspored {
+            padding: 24px 36px;
+        }
+
+        .raspored h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 14px;
+        }
+
+        .raspored-redak {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
+        }
+
+        .raspored-redak:last-child { border-bottom: none; }
+
+        .raspored-redak .r-dan {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .raspored-redak .r-sat {
+            color: #555;
+        }
+
+        .raspored-redak.danas .r-dan {
+            color: #0f3460;
+            font-weight: 800;
+        }
+
+        .raspored-redak.danas .r-sat {
+            color: #0f3460;
+            font-weight: 700;
+        }
+
+        .dot-danas {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #0f3460;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        /* ── Praznici lista ── */
+        .praznici-sekcija {
+            padding: 0 36px 24px;
+        }
+
+        .praznici-sekcija h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 14px;
+        }
+
+        .praznici-lista {
+            list-style: none;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .praznici-lista li {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 7px 0;
+            border-bottom: 1px solid #f5f5f5;
+            color: #555;
+        }
+
+        .praznici-lista li:last-child { border-bottom: none; }
+
+        .praznici-lista .p-datum { color: #c62828; font-weight: 600; }
+        .praznici-lista .p-naziv { color: #333; }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 14px;
+            font-size: 11px;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="kartica">
+
+    <!-- Zaglavlje -->
+    <div class="zaglavlje">
+        <div class="shop-icon">&#127978;</div>
+        <h1>Moj Dućan</h1>
+        <p class="adresa">Ilica 1, Zagreb &bull; vjezba4-2.php</p>
+    </div>
+
+    <!-- Praznik obavijest -->
+    <?php if ($jePraznik): ?>
+        <div class="praznik-info">
+            &#127881; Danas je državni praznik / blagdan: <strong><?php echo $imePraznika; ?></strong>
+        </div>
+    <?php endif; ?>
+
+    <!-- Status -->
+    <div class="status-blok <?php echo $css_status; ?>">
+        <div class="status-badge"><?php echo $status; ?></div>
+        <p class="radno-vrijeme-tekst"><?php echo $radnoVrijeme; ?></p>
+    </div>
+
+    <!-- Info grid: sat i datum -->
+    <div class="info-grid">
+        <div class="info-celija">
+            <div class="oznaka">Trenutno vrijeme</div>
+            <div class="vrijednost"><?php echo $vrijemeIspis; ?></div>
+        </div>
+        <div class="info-celija">
+            <div class="oznaka">Danas</div>
+            <div class="vrijednost" style="font-size:16px"><?php echo $danPuni; ?></div>
+            <div class="podnaslov"><?php echo $datum; ?></div>
+        </div>
+    </div>
+
+    <!-- Raspored -->
+    <div class="raspored">
+        <h3>&#128337; Tjedni raspored</h3>
+
+        <?php
+        $raspored = [
+            "Mon" => ["dan" => "Ponedjeljak", "sat" => "08:00 – 20:00"],
+            "Tue" => ["dan" => "Utorak",      "sat" => "08:00 – 20:00"],
+            "Wed" => ["dan" => "Srijeda",     "sat" => "08:00 – 20:00"],
+            "Thu" => ["dan" => "Četvrtak",    "sat" => "08:00 – 20:00"],
+            "Fri" => ["dan" => "Petak",       "sat" => "08:00 – 20:00"],
+            "Sat" => ["dan" => "Subota",      "sat" => "09:00 – 14:00"],
+            "Sun" => ["dan" => "Nedjelja",    "sat" => "Zatvoreno"],
+        ];
+
+        foreach ($raspored as $kljuc => $info):
+            $jeDanas = ($kljuc === $dan);
+        ?>
+            <div class="raspored-redak <?php echo $jeDanas ? 'danas' : ''; ?>">
+                <span class="r-dan">
+                    <?php if ($jeDanas): ?>
+                        <span class="dot-danas"></span>
+                    <?php endif; ?>
+                    <?php echo $info["dan"]; ?>
+                </span>
+                <span class="r-sat"><?php echo $info["sat"]; ?></span>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <!-- Praznici -->
+    <div class="praznici-sekcija">
+        <h3>&#127881; Neradni dani (praznici i blagdani <?php echo $godina; ?>)</h3>
+        <ul class="praznici-lista">
+            <?php
+            // Sortiramo praznike po datumu
+            uksort($praznici, function($a, $b) {
+                $ad = DateTime::createFromFormat("d.m", $a);
+                $bd = DateTime::createFromFormat("d.m", $b);
+                return $ad <=> $bd;
+            });
+            foreach ($praznici as $dat => $naziv): ?>
+                <li>
+                    <span class="p-datum"><?php echo $dat . "." . $godina; ?></span>
+                    <span class="p-naziv"><?php echo $naziv; ?></span>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+
+    <div class="footer">vjezba4-2.php &bull; date("D") = <?php echo $dan; ?> &bull; date("H") = <?php echo $sat; ?></div>
+
+</div>
+
+</body>
+</html>
+<!-- vjezba4-2.php -->
