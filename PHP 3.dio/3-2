@@ -1,0 +1,197 @@
+<?php
+$broj1     = null;
+$broj2     = null;
+$operacija = null;
+$rezultat  = null;
+$greska    = null;
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $broj1     = $_POST["broj1"];
+    $broj2     = $_POST["broj2"];
+    $operacija = $_POST["operacija"];
+
+    if ($broj1 !== "" && $broj2 !== "") {
+        $broj1 = (float)$broj1;
+        $broj2 = (float)$broj2;
+
+        switch ($operacija) {
+            case "+":
+                $rezultat = $broj1 + $broj2;
+                break;
+            case "-":
+                $rezultat = $broj1 - $broj2;
+                break;
+            case "*":
+                $rezultat = $broj1 * $broj2;
+                break;
+            case "/":
+                if ($broj2 == 0) {
+                    $greska = "Dijeljenje s nulom nije dozvoljeno!";
+                } else {
+                    $rezultat = $broj1 / $broj2;
+                }
+                break;
+            default:
+                $greska = "Nepoznata operacija.";
+        }
+    } else {
+        $greska = "Molimo unesite oba broja.";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator (Switch naredba)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 30px 40px;
+            width: 360px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #333;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        .rezultat-label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .rezultat-vrijednost {
+            font-size: 18px;
+            font-weight: bold;
+            color: #26215C;
+            margin-bottom: 16px;
+            min-height: 28px;
+        }
+
+        .greska {
+            color: #c62828;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-op {
+            flex: 1;
+            padding: 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-op:hover {
+            background: #534AB7;
+            color: #fff;
+            border-color: #534AB7;
+        }
+
+        .btn-op.active {
+            background: #534AB7;
+            color: #fff;
+            border-color: #534AB7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Kalkulator (Switch naredba)</h2>
+
+    <form method="POST" action="" id="forma">
+        <!-- Skriveno polje za operaciju -->
+        <input type="hidden" name="operacija" id="operacija" value="<?php echo htmlspecialchars($operacija ?? ''); ?>">
+
+        <label for="broj1">Upiši prvi broj *</label>
+        <input type="number" id="broj1" name="broj1" step="any"
+               value="<?php echo htmlspecialchars($broj1 ?? ''); ?>" required>
+
+        <label for="broj2">Upiši drugi broj *</label>
+        <input type="number" id="broj2" name="broj2" step="any"
+               value="<?php echo htmlspecialchars($broj2 ?? ''); ?>" required>
+
+        <div class="rezultat-label">Rezultat:</div>
+
+        <div class="rezultat-vrijednost">
+            <?php
+            if ($greska) {
+                echo "<span class='greska'>" . htmlspecialchars($greska) . "</span>";
+            } elseif ($rezultat !== null) {
+                // Lijepo prikazati — bez nepotrebnih decimala
+                $prikaz = (floor($rezultat) == $rezultat) ? (int)$rezultat : round($rezultat, 4);
+                echo $broj1 . " " . htmlspecialchars($operacija) . " " . $broj2 . " = <strong>" . $prikaz . "</strong>";
+            }
+            ?>
+        </div>
+
+        <div class="btn-row">
+            <button type="button" class="btn-op <?php echo ($operacija == '+') ? 'active' : ''; ?>"
+                    onclick="postaviOp('+')">+</button>
+            <button type="button" class="btn-op <?php echo ($operacija == '-') ? 'active' : ''; ?>"
+                    onclick="postaviOp('-')">-</button>
+            <button type="button" class="btn-op <?php echo ($operacija == '*') ? 'active' : ''; ?>"
+                    onclick="postaviOp('*')">*</button>
+            <button type="button" class="btn-op <?php echo ($operacija == '/') ? 'active' : ''; ?>"
+                    onclick="postaviOp('/')">/</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function postaviOp(op) {
+    document.getElementById('operacija').value = op;
+    document.getElementById('forma').submit();
+}
+</script>
+
+</body>
+</html>
+<!-- vjezba3-2.php -->
