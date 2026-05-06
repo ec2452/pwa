@@ -1,0 +1,304 @@
+<?php
+$ocjene        = [];
+$prosjek       = null;
+$konacnaOcjena = null;
+$poruka        = null;
+$greska        = null;
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $k1 = $_POST["kolokvij1"];
+    $k2 = $_POST["kolokvij2"];
+
+    // Provjera jesu li uneseni
+    if ($k1 === "" || $k2 === "") {
+        $greska = "Molimo unesite obje ocjene.";
+    } else {
+        $k1 = (float)$k1;
+        $k2 = (float)$k2;
+
+        // Provjera raspona (1–5)
+        if ($k1 < 1 || $k1 > 5 || $k2 < 1 || $k2 > 5) {
+            $greska = "Ocjena mora biti između 1 i 5!";
+        } else {
+            // Polje ocjena
+            $ocjene = array($k1, $k2);
+
+            // Izračun prosjeka
+            $prosjek = ($ocjene[0] + $ocjene[1]) / 2;
+
+            // Ako je jedan kolokvij negativan (ocjena 1) — krajnja je negativna
+            if ($ocjene[0] < 2 || $ocjene[1] < 2) {
+                $konacnaOcjena = 1;
+                $poruka        = "negativna";
+            } else {
+                $konacnaOcjena = round($prosjek);
+                $poruka        = "pozitivna";
+            }
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator ocjena — vježba 3-3</title>
+    <style>
+        /* ── Reset & osnova ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ── Kartica ── */
+        .kartica {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+        }
+
+        /* ── Zaglavlje ── */
+        .zaglavlje {
+            background: linear-gradient(135deg, #534AB7, #764ba2);
+            color: #fff;
+            padding: 28px 32px;
+        }
+
+        .zaglavlje h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .zaglavlje p {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        /* ── Tijelo forme ── */
+        .tijelo {
+            padding: 32px;
+        }
+
+        .polje {
+            margin-bottom: 20px;
+        }
+
+        .polje label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .polje input[type="number"] {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color .2s;
+            outline: none;
+            color: #222;
+        }
+
+        .polje input[type="number"]:focus {
+            border-color: #534AB7;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* ── Gumb ── */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #534AB7, #764ba2);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity .2s, transform .1s;
+            margin-top: 4px;
+        }
+
+        .btn:hover  { opacity: .9; }
+        .btn:active { transform: scale(.98); }
+
+        /* ── Greška ── */
+        .greska {
+            background: #fdecea;
+            border-left: 4px solid #e53935;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #c62828;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* ── Rezultati ── */
+        .rezultati {
+            margin-top: 28px;
+            border-top: 2px solid #f0f0f0;
+            padding-top: 24px;
+        }
+
+        .rezultati h2 {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .redak {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .redak:last-child { border-bottom: none; }
+
+        .redak .naziv { font-weight: 600; color: #333; }
+
+        .redak .vrijednost {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* ── Boja konačne ocjene ── */
+        .ocjena-pozitivna { color: #2e7d32; }
+        .ocjena-negativna { color: #c62828; }
+
+        /* ── Badge pozitivna/negativna ── */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .badge-pozitivna { background: #e8f5e9; color: #2e7d32; }
+        .badge-negativna { background: #fdecea; color: #c62828; }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 14px;
+            font-size: 11px;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="kartica">
+
+    <!-- Zaglavlje -->
+    <div class="zaglavlje">
+        <h1>&#127891; Kalkulator ocjena</h1>
+        <p>Izračun prosjeka i konačne ocjene iz predmeta</p>
+    </div>
+
+    <!-- Tijelo -->
+    <div class="tijelo">
+
+        <?php if ($greska): ?>
+            <div class="greska">&#9888; <?php echo htmlspecialchars($greska); ?></div>
+        <?php endif; ?>
+
+        <form method="POST" action="">
+
+            <div class="polje">
+                <label for="k1">Ocjena I. kolokvija</label>
+                <input type="number" id="k1" name="kolokvij1"
+                       min="1" max="5" step="1"
+                       value="<?php echo htmlspecialchars($_POST['kolokvij1'] ?? ''); ?>"
+                       placeholder="Unesite ocjenu (1–5)" required>
+                <p class="hint">Ocjena mora biti između 1 i 5</p>
+            </div>
+
+            <div class="polje">
+                <label for="k2">Ocjena II. kolokvija</label>
+                <input type="number" id="k2" name="kolokvij2"
+                       min="1" max="5" step="1"
+                       value="<?php echo htmlspecialchars($_POST['kolokvij2'] ?? ''); ?>"
+                       placeholder="Unesite ocjenu (1–5)" required>
+                <p class="hint">Ocjena mora biti između 1 i 5</p>
+            </div>
+
+            <button type="submit" class="btn">Izračunaj ocjenu &#8594;</button>
+        </form>
+
+        <!-- Rezultati -->
+        <?php if ($prosjek !== null && !$greska): ?>
+        <div class="rezultati">
+            <h2>Rezultat</h2>
+
+            <div class="redak">
+                <span class="naziv">Ocjena I. kolokvija</span>
+                <span class="vrijednost"><?php echo $ocjene[0]; ?></span>
+            </div>
+
+            <div class="redak">
+                <span class="naziv">Ocjena II. kolokvija</span>
+                <span class="vrijednost"><?php echo $ocjene[1]; ?></span>
+            </div>
+
+            <div class="redak">
+                <span class="naziv">Srednja ocjena iz predmeta</span>
+                <span class="vrijednost"><?php echo $prosjek; ?></span>
+            </div>
+
+            <div class="redak">
+                <span class="naziv">Konačna ocjena iz predmeta</span>
+                <span class="vrijednost <?php echo 'ocjena-' . $poruka; ?>">
+                    <?php echo $konacnaOcjena; ?>
+                </span>
+            </div>
+
+            <div class="redak">
+                <span class="naziv">Status</span>
+                <span class="badge <?php echo 'badge-' . $poruka; ?>">
+                    <?php echo ucfirst($poruka); ?>
+                </span>
+            </div>
+        </div>
+        <?php endif; ?>
+
+    </div><!-- /tijelo -->
+
+    <div class="footer">vjezba3-3.php</div>
+
+</div><!-- /kartica -->
+
+</body>
+</html>
+<!-- vjezba3-3.php -->
