@@ -1,0 +1,132 @@
+
+Copy
+
+<?php
+$zamisljeniBroj = rand(1, 9);
+$pogodak = null;
+$unesenibroj = null;
+ 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $unesenibroj = (int)$_POST["broj"];
+    $zamisljeniBroj = (int)$_POST["zamisljeniBroj"];
+ 
+    if ($unesenibroj == $zamisljeniBroj) {
+        $pogodak = true;
+    } else {
+        $pogodak = false;
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Igra (pogodi broj)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+ 
+        .container {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 30px 40px;
+            width: 320px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+ 
+        h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+ 
+        label {
+            font-size: 14px;
+            color: #333;
+            display: block;
+            margin-bottom: 6px;
+        }
+ 
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+ 
+        .btn-pogodak {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+ 
+        .btn-krivo {
+            background-color: #e53935;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+ 
+        .btn-pogodak:hover { background-color: #43A047; }
+        .btn-krivo:hover   { background-color: #c62828; }
+ 
+        .rezultat {
+            margin-top: 14px;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+ 
+<div class="container">
+    <h2>Igra (pogodi broj)</h2>
+ 
+    <form method="POST" action="">
+        <!-- Skriveno polje koje cuva zamisljeniBroj kroz POST -->
+        <input type="hidden" name="zamisljeniBroj" value="<?php echo $zamisljeniBroj; ?>">
+ 
+        <label for="broj">Upiši jedan broj od 1 do 9*</label>
+        <input type="number" id="broj" name="broj" min="1" max="9"
+               value="<?php echo htmlspecialchars($unesenibroj ?? ''); ?>" required>
+ 
+        <?php if ($pogodak === true): ?>
+            <button type="submit" class="btn-pogodak">Pogodak, probaj ponovo!</button>
+        <?php else: ?>
+            <button type="submit" class="btn-krivo">
+                <?php echo ($pogodak === false) ? 'Krivo, probaj ponovo!' : 'Provjeri'; ?>
+            </button>
+        <?php endif; ?>
+    </form>
+ 
+    <?php if ($pogodak !== null): ?>
+        <p class="rezultat">Zamišljeni broj je <?php echo $zamisljeniBroj; ?></p>
+    <?php endif; ?>
+</div>
+ 
+</body>
+</html>
+<!-- vjezba3-1.php -->
