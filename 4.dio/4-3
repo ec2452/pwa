@@ -1,0 +1,264 @@
+<?php
+$ulazniNiz  = null;
+$brojRijeci = null;
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["niz"])) {
+    $ulazniNiz  = trim($_POST["niz"]);
+    $brojRijeci = str_word_count($ulazniNiz);
+}
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zadatak str_word_count — vježba 4-3</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .kartica {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+            width: 100%;
+            max-width: 560px;
+            overflow: hidden;
+        }
+
+        /* Zaglavlje */
+        .zaglavlje {
+            background: linear-gradient(135deg, #0f3460, #533483);
+            color: #fff;
+            padding: 26px 32px;
+        }
+
+        .zaglavlje h1 {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .zaglavlje h1 code {
+            background: rgba(255,255,255,0.18);
+            border-radius: 5px;
+            padding: 2px 8px;
+            font-size: 17px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .zaglavlje p {
+            font-size: 13px;
+            opacity: 0.80;
+            line-height: 1.5;
+        }
+
+        .zaglavlje p code {
+            background: rgba(255,255,255,0.18);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        /* Forma */
+        .tijelo {
+            padding: 28px 32px;
+        }
+
+        .polje label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .polje textarea {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 110px;
+            outline: none;
+            transition: border-color .2s;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #222;
+            line-height: 1.5;
+        }
+
+        .polje textarea:focus {
+            border-color: #533483;
+        }
+
+        .btn {
+            margin-top: 14px;
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #0f3460, #533483);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity .2s, transform .1s;
+        }
+
+        .btn:hover  { opacity: .88; }
+        .btn:active { transform: scale(.98); }
+
+        /* Rezultat */
+        .rezultat {
+            margin-top: 24px;
+            border-top: 2px solid #f0f0f0;
+            padding-top: 20px;
+        }
+
+        .rezultat-niz {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .rezultat-niz span.oznaka {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .rezultat-niz .tekst-crveni {
+            color: #c62828;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .rezultat-broj {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, #e8eaf6, #f3e5f5);
+            border-radius: 10px;
+            padding: 18px 22px;
+        }
+
+        .broj-veliki {
+            font-size: 48px;
+            font-weight: 800;
+            color: #533483;
+            line-height: 1;
+        }
+
+        .broj-opis {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .broj-opis strong {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        /* Nema teksta */
+        .upozorenje {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #795548;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 11px;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="kartica">
+
+    <!-- Zaglavlje -->
+    <div class="zaglavlje">
+        <h1>Zadatak <code>str_word_count</code></h1>
+        <p>
+            U zadatku se traži da se ispiše koliko je riječi u rečenici.
+            Koristite naredbu <code>str_word_count</code>
+        </p>
+    </div>
+
+    <!-- Forma -->
+    <div class="tijelo">
+        <form method="POST" action="">
+            <div class="polje">
+                <label for="niz">Ulazni niz:</label>
+                <textarea id="niz" name="niz" placeholder="Unesite tekst ovdje..."><?php
+                    echo htmlspecialchars($ulazniNiz ?? '');
+                ?></textarea>
+            </div>
+            <button type="submit" class="btn">&#128290; Ispiši broj riječi</button>
+        </form>
+
+        <!-- Rezultat -->
+        <?php if ($ulazniNiz !== null): ?>
+            <?php if ($ulazniNiz === ""): ?>
+                <div class="upozorenje">&#9888; Molimo unesite tekst u polje.</div>
+            <?php else: ?>
+                <div class="rezultat">
+                    <p class="rezultat-niz">
+                        <span class="oznaka">ulazni niz:</span>
+                        <span class="tekst-crveni"> <?php echo htmlspecialchars($ulazniNiz); ?></span>
+                    </p>
+                    <div class="rezultat-broj">
+                        <div class="broj-veliki"><?php echo $brojRijeci; ?></div>
+                        <div class="broj-opis">
+                            <strong>
+                                <?php
+                                    if ($brojRijeci === 1) {
+                                        echo "riječ";
+                                    } elseif ($brojRijeci >= 2 && $brojRijeci <= 4) {
+                                        echo "riječi";
+                                    } else {
+                                        echo "riječi";
+                                    }
+                                ?>
+                            </strong>
+                            Tekst sadrži <?php echo $brojRijeci; ?> 
+                            <?php echo ($brojRijeci === 1) ? "riječ" : "riječi"; ?>.
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+
+    </div><!-- /tijelo -->
+
+    <div class="footer">vjezba4-3.php &bull; PHP funkcija: str_word_count()</div>
+
+</div>
+
+</body>
+</html>
+<!-- vjezba4-3.php -->
