@@ -1,0 +1,502 @@
+<?php
+// ── Sve u jednom fajlu — cookie zadatak ──
+
+$poruka  = null;
+$obrisan = false;
+
+// ── Brisanje kolačića ──
+if (isset($_GET["obrisi"])) {
+    setcookie("kol_korisnik", "", time() - 3600, "/");
+    setcookie("kol_tema",     "", time() - 3600, "/");
+    setcookie("kol_vijesti",  "", time() - 3600, "/");
+    setcookie("kol_datum",    "", time() - 3600, "/");
+    $obrisan = true;
+    // Nakon brisanja resetiramo lokalne varijable
+    $_COOKIE["kol_korisnik"] = "";
+    $_COOKIE["kol_tema"]     = "";
+    $_COOKIE["kol_vijesti"]  = "";
+    $_COOKIE["kol_datum"]    = "";
+}
+
+// ── Postavljanje kolačića (POST) ──
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !$obrisan) {
+    $korisnik = trim($_POST["korisnik"] ?? "");
+    $tema     = trim($_POST["tema"]     ?? "");
+    $vijesti  = isset($_POST["vijesti"]) ? implode(",", $_POST["vijesti"]) : "";
+    $trajanje = (int)($_POST["trajanje"] ?? 30);
+
+    if ($korisnik !== "" && $tema !== "") {
+        $istekVrijeme = time() + ($trajanje * 24 * 60 * 60);
+        setcookie("kol_korisnik", $korisnik,              $istekVrijeme, "/");
+        setcookie("kol_tema",     $tema,                   $istekVrijeme, "/");
+        setcookie("kol_vijesti",  $vijesti,                $istekVrijeme, "/");
+        setcookie("kol_datum",    date("d.m.Y H:i:s"),    $istekVrijeme, "/");
+
+        // Ažuriramo $_COOKIE odmah (setcookie ne ažurira $_COOKIE u istom requestu)
+        $_COOKIE["kol_korisnik"] = $korisnik;
+        $_COOKIE["kol_tema"]     = $tema;
+        $_COOKIE["kol_vijesti"]  = $vijesti;
+        $_COOKIE["kol_datum"]    = date("d.m.Y H:i:s");
+
+        $poruka = "uspjeh";
+    } else {
+        $poruka = "greska";
+    }
+}
+
+// ── Čitanje kolačića ──
+$kol_korisnik = $_COOKIE["kol_korisnik"] ?? null;
+$kol_tema     = $_COOKIE["kol_tema"]     ?? null;
+$kol_vijesti  = $_COOKIE["kol_vijesti"]  ?? null;
+$kol_datum    = $_COOKIE["kol_datum"]    ?? null;
+
+$kategorijeVijesti = [];
+if ($kol_vijesti && $kol_vijesti !== "") {
+    $kategorijeVijesti = explode(",", $kol_vijesti);
+}
+
+// Određujemo aktivni tab iz GET parametra
+$tab = $_GET["tab"] ?? "postavi";
+if ($poruka === "uspjeh") $tab = "citaj";
+
+// Ikone za kategorije
+$ikoneTema = [
+    "sport"       => "⚽",
+    "tehnologija" => "💻",
+    "politika"    => "🏛️",
+    "kultura"     => "🎭",
+    "ekonomija"   => "📈",
+];
+?>
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie zadatak — vjezba-cookie.php</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px 20px;
+        }
+
+        /* ── Kartica ── */
+        .kartica {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 580px;
+            overflow: hidden;
+        }
+
+        /* ── Zaglavlje ── */
+        .zaglavlje {
+            background: linear-gradient(135deg, #0f3460, #533483);
+            color: #fff;
+            padding: 24px 32px;
+        }
+
+        .zaglavlje h1 { font-size: 20px; font-weight: 800; margin-bottom: 5px; }
+
+        .zaglavlje p {
+            font-size: 13px;
+            opacity: .75;
+            line-height: 1.5;
+        }
+
+        .zaglavlje code {
+            background: rgba(255,255,255,.18);
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        /* ── Tabovi ── */
+        .tab-row {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-row a {
+            flex: 1;
+            text-align: center;
+            padding: 14px 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #888;
+            text-decoration: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all .2s;
+        }
+
+        .tab-row a:hover { color: #533483; }
+
+        .tab-row a.aktivan {
+            color: #533483;
+            border-bottom-color: #533483;
+        }
+
+        /* ── Tijelo ── */
+        .tijelo { padding: 28px 32px; }
+
+        /* ── Notifikacije ── */
+        .notif {
+            border-radius: 8px;
+            padding: 13px 16px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .notif-uspjeh  { background: #e8f5e9; border-left: 4px solid #43a047; color: #2e7d32; }
+        .notif-greska  { background: #fdecea; border-left: 4px solid #e53935; color: #c62828; }
+        .notif-info    { background: #fff8e1; border-left: 4px solid #ffc107; color: #795548; }
+        .notif-obrisan { background: #fdecea; border-left: 4px solid #e53935; color: #c62828; }
+
+        /* ── Forma ── */
+        .polje { margin-bottom: 18px; }
+
+        .polje label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 7px;
+        }
+
+        .polje input[type="text"],
+        .polje select {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color .2s;
+            color: #222;
+            background: #fff;
+        }
+
+        .polje input[type="text"]:focus,
+        .polje select:focus { border-color: #533483; }
+
+        /* Checkboxovi */
+        .checkbox-grupa { display: flex; flex-direction: column; gap: 8px; }
+
+        .check-redak {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .check-redak:hover { border-color: #533483; background: #f8f5ff; }
+
+        .check-redak input[type="checkbox"] {
+            accent-color: #533483;
+            width: 16px; height: 16px;
+            cursor: pointer;
+        }
+
+        .check-redak span { font-size: 14px; color: #333; font-weight: 500; }
+
+        /* Gumb */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity .2s;
+        }
+
+        .btn:hover { opacity: .88; }
+        .btn-postavi { background: linear-gradient(135deg, #0f3460, #533483); }
+        .btn-obrisi  { background: linear-gradient(135deg, #c62828, #e53935); margin-top: 10px; }
+
+        /* ── Info redci (čitanje) ── */
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .info-redak {
+            display: flex;
+            align-items: flex-start;
+            background: #fff;
+            padding: 14px 18px;
+            gap: 14px;
+        }
+
+        .info-ikona { font-size: 20px; width: 28px; flex-shrink: 0; margin-top: 1px; }
+        .info-sadrzaj { flex: 1; }
+
+        .info-oznaka {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: #999;
+            font-weight: 700;
+            margin-bottom: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .info-vrijednost { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+
+        .chip-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+
+        .chip {
+            background: linear-gradient(135deg, #0f3460, #533483);
+            color: #fff;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Sirovi ispis */
+        .raw-blok {
+            background: #1e1e2e;
+            color: #a6e3a1;
+            border-radius: 10px;
+            padding: 16px 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .raw-blok .k { color: #cba6f7; }
+        .raw-blok .v { color: #fab387; }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 11px;
+            color: #bbb;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="kartica">
+
+    <!-- Zaglavlje -->
+    <div class="zaglavlje">
+        <h1>&#127850; Cookie zadatak</h1>
+        <p>
+            Jedan fajl — <code>setcookie()</code> za postavljanje,
+            <code>$_COOKIE</code> za čitanje kolačića.
+        </p>
+    </div>
+
+    <!-- Tabovi -->
+    <div class="tab-row">
+        <a href="?tab=postavi" class="<?php echo ($tab === 'postavi') ? 'aktivan' : ''; ?>">
+            &#9881; Postavi kolačić
+        </a>
+        <a href="?tab=citaj" class="<?php echo ($tab === 'citaj') ? 'aktivan' : ''; ?>">
+            &#128214; Čitaj kolačić
+        </a>
+    </div>
+
+    <div class="tijelo">
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- TAB 1: POSTAVI KOLAČIĆ                        -->
+    <!-- ══════════════════════════════════════════════ -->
+    <?php if ($tab === "postavi"): ?>
+
+        <?php if ($poruka === "greska"): ?>
+            <div class="notif notif-greska">&#9888; Molimo unesite korisničko ime i odaberite temu!</div>
+        <?php endif; ?>
+
+        <form method="POST" action="?tab=postavi">
+
+            <!-- Korisničko ime -->
+            <div class="polje">
+                <label for="korisnik">&#128100; Korisničko ime</label>
+                <input type="text" id="korisnik" name="korisnik"
+                       placeholder="Unesite vaše ime..."
+                       value="<?php echo htmlspecialchars($_POST['korisnik'] ?? $kol_korisnik ?? ''); ?>">
+            </div>
+
+            <!-- Tema -->
+            <div class="polje">
+                <label for="tema">&#127912; Tema stranice</label>
+                <select id="tema" name="tema">
+                    <option value="">— Odaberite temu —</option>
+                    <?php
+                    $teme = ["svijetla" => "☀️ Svijetla tema", "tamna" => "🌙 Tamna tema", "plava" => "🔵 Plava tema"];
+                    $trenutnaTema = $_POST['tema'] ?? $kol_tema ?? '';
+                    foreach ($teme as $val => $naziv):
+                    ?>
+                    <option value="<?php echo $val; ?>" <?php echo ($trenutnaTema === $val) ? 'selected' : ''; ?>>
+                        <?php echo $naziv; ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Vijesti -->
+            <div class="polje">
+                <label>&#128240; Kategorije vijesti</label>
+                <div class="checkbox-grupa">
+                    <?php
+                    $kategorije = [
+                        "sport"       => "⚽ Sport",
+                        "tehnologija" => "💻 Tehnologija",
+                        "politika"    => "🏛️ Politika",
+                        "kultura"     => "🎭 Kultura",
+                        "ekonomija"   => "📈 Ekonomija",
+                    ];
+                    $provjeriVijesti = $_POST['vijesti'] ?? $kategorijeVijesti;
+                    foreach ($kategorije as $val => $naziv):
+                        $checked = in_array($val, $provjeriVijesti) ? 'checked' : '';
+                    ?>
+                    <label class="check-redak">
+                        <input type="checkbox" name="vijesti[]"
+                               value="<?php echo $val; ?>" <?php echo $checked; ?>>
+                        <span><?php echo $naziv; ?></span>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Trajanje -->
+            <div class="polje">
+                <label for="trajanje">&#8987; Trajanje kolačića</label>
+                <select id="trajanje" name="trajanje">
+                    <option value="1">1 dan</option>
+                    <option value="7">7 dana</option>
+                    <option value="30" selected>30 dana</option>
+                    <option value="365">1 godina</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-postavi">
+                &#127850; Spremi kolačić (setcookie)
+            </button>
+        </form>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- TAB 2: ČITAJ KOLAČIĆ                          -->
+    <!-- ══════════════════════════════════════════════ -->
+    <?php elseif ($tab === "citaj"): ?>
+
+        <?php if ($obrisan): ?>
+            <div class="notif notif-obrisan">
+                &#10060; Kolačići su obrisani! Idi na tab "Postavi kolačić" i postavi nove.
+            </div>
+        <?php elseif ($poruka === "uspjeh"): ?>
+            <div class="notif notif-uspjeh">
+                &#9989; Kolačići su uspješno postavljeni i prikazani su ispod!
+            </div>
+        <?php elseif ($kol_korisnik === null || $kol_korisnik === ""): ?>
+            <div class="notif notif-info">
+                &#9888; Nema aktivnog kolačića! Idi na tab
+                <a href="?tab=postavi" style="color:#795548;font-weight:700">Postavi kolačić</a>
+                i unesi podatke.
+            </div>
+        <?php endif; ?>
+
+        <?php if ($kol_korisnik && !$obrisan): ?>
+
+            <!-- Prikaz kolačića -->
+            <div class="info-grid">
+                <div class="info-redak">
+                    <div class="info-ikona">&#128100;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_COOKIE["kol_korisnik"]</div>
+                        <div class="info-vrijednost"><?php echo htmlspecialchars($kol_korisnik); ?></div>
+                    </div>
+                </div>
+                <div class="info-redak">
+                    <div class="info-ikona">&#127912;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_COOKIE["kol_tema"]</div>
+                        <div class="info-vrijednost"><?php echo htmlspecialchars(ucfirst($kol_tema ?? "—")); ?> tema</div>
+                    </div>
+                </div>
+                <div class="info-redak">
+                    <div class="info-ikona">&#128240;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_COOKIE["kol_vijesti"]</div>
+                        <?php if (!empty($kategorijeVijesti) && $kategorijeVijesti[0] !== ""): ?>
+                            <div class="chip-wrap">
+                                <?php foreach ($kategorijeVijesti as $kat): ?>
+                                    <span class="chip">
+                                        <?php echo ($ikoneTema[$kat] ?? "") . " " . htmlspecialchars(ucfirst($kat)); ?>
+                                    </span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="info-vrijednost">—</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="info-redak">
+                    <div class="info-ikona">&#128197;</div>
+                    <div class="info-sadrzaj">
+                        <div class="info-oznaka">$_COOKIE["kol_datum"]</div>
+                        <div class="info-vrijednost"><?php echo htmlspecialchars($kol_datum ?? "—"); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sirovi ispis -->
+            <div class="raw-blok"><span class="k">$_COOKIE</span> = [
+  <span class="k">"kol_korisnik"</span> =&gt; <span class="v">"<?php echo htmlspecialchars($kol_korisnik); ?>"</span>,
+  <span class="k">"kol_tema"</span>     =&gt; <span class="v">"<?php echo htmlspecialchars($kol_tema ?? ""); ?>"</span>,
+  <span class="k">"kol_vijesti"</span>  =&gt; <span class="v">"<?php echo htmlspecialchars($kol_vijesti ?? ""); ?>"</span>,
+  <span class="k">"kol_datum"</span>    =&gt; <span class="v">"<?php echo htmlspecialchars($kol_datum ?? ""); ?>"</span>,
+]</div>
+
+            <!-- Gumb brisanje -->
+            <a href="?tab=citaj&obrisi=1" class="btn btn-obrisi">&#10060; Obriši sve kolačiće</a>
+
+        <?php endif; ?>
+
+    <?php endif; ?>
+
+    </div><!-- /tijelo -->
+
+    <div class="footer">vjezba-cookie.php &bull; setcookie() + $_COOKIE</div>
+</div>
+
+</body>
+</html>
+<!-- vjezba-cookie.php -->
